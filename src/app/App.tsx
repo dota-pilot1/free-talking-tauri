@@ -31,7 +31,7 @@ import { AppTopbar } from "../widgets/app-shell/ui/AppTopbar";
 import { useAppUpdate } from "../shared/lib/useAppUpdate";
 import { AppUpdatePanel } from "../shared/ui/AppUpdatePanel";
 
-const appVersion = "0.1.15";
+const appVersion = "0.1.16";
 const voiceRecordLimitMs = 8_000;
 type AppUpdateControls = ReturnType<typeof useAppUpdate>;
 
