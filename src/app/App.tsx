@@ -28,9 +28,12 @@ import { LoginScreen } from "../features/auth/login/LoginScreen";
 import { useAuthSession } from "../features/auth/model/useAuthSession";
 import { AppSidebar } from "../widgets/app-shell/ui/AppSidebar";
 import { AppTopbar } from "../widgets/app-shell/ui/AppTopbar";
+import { useAppUpdate } from "../shared/lib/useAppUpdate";
+import { AppUpdatePanel } from "../shared/ui/AppUpdatePanel";
 
 const appVersion = "0.1.15";
 const voiceRecordLimitMs = 8_000;
+type AppUpdateControls = ReturnType<typeof useAppUpdate>;
 
 type CharacterEditorDraft = {
   title: string;
@@ -86,6 +89,7 @@ export function App() {
   const [history, setHistory] = useState<Message[][]>([]);
   const [error, setError] = useState("");
   const [activeMenu, setActiveMenu] = useState<WebMenuId>("englishConversation");
+  const appUpdate = useAppUpdate(appVersion);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -105,6 +109,10 @@ export function App() {
     [activeMenu]
   );
   const isLoggedIn = token.trim().length > 0 && user !== null;
+
+  useEffect(() => {
+    if (isLoggedIn) appUpdate.checkOnceOnStartup();
+  }, [appUpdate.checkOnceOnStartup, isLoggedIn]);
 
   useEffect(() => {
     const clearExpiredSession = () => {
@@ -740,8 +748,11 @@ export function App() {
         activeWebMenu={activeWebMenu}
         user={user}
         connectionStatus={connectionStatus}
-        appVersion={appVersion}
+        appVersion={appUpdate.state.currentVersion}
+        updateState={appUpdate.state}
+        updateBusy={appUpdate.busy}
         onOpenMenu={openMenu}
+        onInstallUpdate={() => void appUpdate.installUpdate()}
         onLogout={() => void handleLogout()}
       />
 
@@ -823,7 +834,8 @@ export function App() {
             apiUrl={apiUrl}
             token={token}
             user={user}
-            appVersion={appVersion}
+            appVersion={appUpdate.state.currentVersion}
+            appUpdate={appUpdate}
             onOpenSettings={() => openMenu("settings")}
           />
         )}
@@ -839,12 +851,14 @@ function ProfileView({
   token,
   user,
   appVersion,
+  appUpdate,
   onOpenSettings,
 }: {
   apiUrl: string;
   token: string;
   user: NonNullable<ReturnType<typeof useAuthSession>["user"]>;
   appVersion: string;
+  appUpdate: AppUpdateControls;
   onOpenSettings: () => void;
 }) {
   const displayName = user.username || user.email;
@@ -985,6 +999,13 @@ function ProfileView({
           </button>
         </div>
       </div>
+
+      <AppUpdatePanel
+        updateState={appUpdate.state}
+        busy={appUpdate.busy}
+        onCheckUpdate={() => void appUpdate.checkForUpdate()}
+        onInstallUpdate={() => void appUpdate.installUpdate()}
+      />
 
       <div style={{ marginTop: 16, overflow: "hidden", border: "1px solid #d8e0ea", borderRadius: 12, background: "#fff", boxShadow: "0 14px 34px rgba(15, 23, 42, 0.06)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: 16, borderBottom: "1px solid #eef2f7" }}>
