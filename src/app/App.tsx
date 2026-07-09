@@ -111,7 +111,11 @@ export function App() {
   const isLoggedIn = token.trim().length > 0 && user !== null;
 
   useEffect(() => {
-    if (isLoggedIn) appUpdate.checkOnceOnStartup();
+    if (!isLoggedIn) return;
+    const timer = window.setTimeout(() => {
+      appUpdate.checkOnceOnStartup();
+    }, 10_000);
+    return () => window.clearTimeout(timer);
   }, [appUpdate.checkOnceOnStartup, isLoggedIn]);
 
   useEffect(() => {
